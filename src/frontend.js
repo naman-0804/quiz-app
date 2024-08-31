@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import './frontend.css'; // Import the CSS file
+import './frontend.css'; 
+import AuthPopup from './auth'; // Import the AuthPopup component
+
+function decodeHtmlEntities(str) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
+}
 
 const Quiz = () => {
   const [questions, setQuestions] = useState(null);
@@ -11,7 +18,8 @@ const Quiz = () => {
   const [timer, setTimer] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
-  const [isQuizActive, setIsQuizActive] = useState(true);
+  const [isQuizActive, setIsQuizActive] = useState(false); // Start quiz inactive initially
+  const [showAuthPopup, setShowAuthPopup] = useState(true); // Show auth popup initially
 
   const fetchQuestions = async () => {
     if (!isQuizActive) return;
@@ -20,14 +28,13 @@ const Quiz = () => {
     setError(null);
 
     try {
-      const response = await fetch(
-        'https://opentdb.com/api.php?amount=3'
-      );
+      const response = await fetch('https://opentdb.com/api.php?amount=3');
       const data = await response.json();
       console.log('Fetched Data:', data);
       if (data.results && data.results.length > 0) {
         const sortedQuestions = data.results.map(question => ({
           ...question,
+          question: decodeHtmlEntities(question.question),
           options: [...question.incorrect_answers, question.correct_answer].sort(() => Math.random() - 0.5)
         }));
         setQuestions(sortedQuestions);
@@ -46,14 +53,16 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    fetchQuestions(); 
-  }, []);
+    if (isQuizActive) {
+      fetchQuestions(); 
+    }
+  }, [isQuizActive]);
 
   useEffect(() => {
     let timerInterval;
     if (isTimerActive) {
       timerInterval = setInterval(() => {
-        setTimer((prevTimer) => {
+        setTimer(prevTimer => {
           if (prevTimer <= 1) {
             clearInterval(timerInterval);
             setIsTimerActive(false);
@@ -70,9 +79,9 @@ const Quiz = () => {
   const handleAnswerClick = (selectedAnswer, correctAnswer, questionIndex) => {
     if (!answeredOptions[questionIndex] && isQuizActive) {
       if (selectedAnswer === correctAnswer) {
-        setScore((prevScore) => prevScore + 1);
+        setScore(prevScore => prevScore + 1);
       }
-      setAnsweredOptions((prevOptions) => ({
+      setAnsweredOptions(prevOptions => ({
         ...prevOptions,
         [questionIndex]: {
           selected: true,
@@ -80,10 +89,10 @@ const Quiz = () => {
         },
       }));
 
-      setTotalQuestionsAnswered((prevCount) => prevCount + 1);
+      setTotalQuestionsAnswered(prevCount => prevCount + 1);
 
       setTimeout(() => {
-        setCurrentQuestionIndex((prevIndex) => {
+        setCurrentQuestionIndex(prevIndex => {
           const nextIndex = prevIndex + 1;
           if (nextIndex < questions.length) {
             setTimer(30); 
@@ -103,8 +112,12 @@ const Quiz = () => {
     setIsTimerActive(false); 
   };
 
-  const handleRefreshQuiz = () => {
+  const handleStartQuiz = () => {
     setIsQuizActive(true);
+    fetchQuestions();
+  };
+
+  const handleRefreshQuiz = () => {
     fetchQuestions();
   };
 
@@ -114,14 +127,21 @@ const Quiz = () => {
 
   return (
     <div>
+      {showAuthPopup && <AuthPopup onClose={() => setShowAuthPopup(false)} />}
       <h1>Quiz Questions</h1>
       <div className="container">
         <div className="box">
           <p>Score: {score}</p>
           <p>Total Questions Answered: {totalQuestionsAnswered}</p>
           <p>Timer: {timer}s</p>
-          <button className="stop-button" onClick={handleStopQuiz} disabled={!isQuizActive}>Stop Quiz</button>
-          <button className="refresh-button" onClick={handleRefreshQuiz} disabled={!isQuizActive}>Refresh Quiz</button>
+          {isQuizActive ? (
+            <>
+              <button className="stop-button" onClick={handleStopQuiz} disabled={!isQuizActive}>Stop Quiz</button>
+              <button className="refresh-button" onClick={handleRefreshQuiz}>Refresh Quiz</button>
+            </>
+          ) : (
+            <button className="start-button" onClick={handleStartQuiz}>Start Quiz</button>
+          )}
         </div>
       </div>
       {error && <p>{error}</p>}
@@ -129,23 +149,23 @@ const Quiz = () => {
         currentQuestionIndex < questions.length && (
           <div className="question-container">
             <p className="question">{questions[currentQuestionIndex].question}</p>
-            <ul className="options">
+            <div className="options">
               {questions[currentQuestionIndex].options.map((option, i) => {
                 const isBlurred = answeredOptions[currentQuestionIndex] && answeredOptions[currentQuestionIndex].selected;
                 const isCorrect = answeredOptions[currentQuestionIndex] && option === questions[currentQuestionIndex].correct_answer;
 
                 return (
-                  <li key={i} className={isBlurred ? (isCorrect ? 'correct' : 'incorrect') : ''}>
-                    <button
-                      onClick={() => handleAnswerClick(option, questions[currentQuestionIndex].correct_answer, currentQuestionIndex)}
-                      disabled={answeredOptions[currentQuestionIndex]?.selected} 
-                    >
-                      {option}
-                    </button>
-                  </li>
+                  <button
+                    key={i}
+                    className={isBlurred ? (isCorrect ? 'correct' : 'incorrect') : ''}
+                    onClick={() => handleAnswerClick(option, questions[currentQuestionIndex].correct_answer, currentQuestionIndex)}
+                    disabled={answeredOptions[currentQuestionIndex]?.selected} 
+                  >
+                    {option}
+                  </button>
                 );
               })}
-            </ul>
+            </div>
           </div>
         )
       )}
