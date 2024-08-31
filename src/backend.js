@@ -1,3 +1,4 @@
+// server.js (or backend.js)
 const express = require('express');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
@@ -15,7 +16,12 @@ const client = new MongoClient(uri, {
 const app = express();
 const port = 5000;
 
-app.use(cors());
+// Configure CORS
+app.use(cors({
+  origin: '*', // Allow requests from this origin
+  credentials: true, // Allow cookies and other credentials
+}));
+
 app.use(bodyParser.json());
 
 // Connect to MongoDB
@@ -33,23 +39,25 @@ const db = client.db('userDB');
 const usersCollection = db.collection('users');
 
 // Handle login/signup requests
-// server.js (or backend.js)
 app.post('/api/users/login', async (req, res) => {
-  const { username, password } = req.body;
-
-  try {
-    const user = await usersCollection.findOne({ username, password });
-    if (user) {
-      res.status(200).json({ message: 'Login successful', userId: user._id.toString() });
-    } else {
-      res.status(401).json({ message: 'Invalid username or password' });
+    const { username, password } = req.body;
+  
+    console.log('Login Request:', { username, password }); // Log request data
+  
+    try {
+      const user = await usersCollection.findOne({ username, password });
+      if (user) {
+        console.log('User Found:', user); // Log user details
+        res.status(200).json({ message: 'Login succsessful', userId: user._id.toString() });
+      } else {
+        res.status(401).json({ message: 'Invalid username or password' });
+      }
+    } catch (error) {
+      console.error('Error:', error); // Log errors
+      res.status(500).json({ message: 'Internal server error', error });
     }
-  } catch (error) {
-    res.status(500).json({ message: 'Internal server error', error });
-  }
-});
-
-
+  });
+  
 // GET user details by userId
 app.get('/api/users/:userId', async (req, res) => {
   const { userId } = req.params;
