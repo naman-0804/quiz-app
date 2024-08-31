@@ -1,5 +1,6 @@
+// AuthPopup.js
 import React, { useState } from 'react';
-import './Auth.css'; // Create this CSS file for styling
+import './Auth.css'; // Ensure this CSS file is correctly linked
 
 const AuthPopup = ({ onClose }) => {
   const [mode, setMode] = useState('login');
@@ -14,11 +15,15 @@ const AuthPopup = ({ onClose }) => {
       body: JSON.stringify({ username, password })
     });
     if (response.ok) {
-      onClose(); 
-
+      alert('Operation successful');
+      onClose();
     } else {
       alert('Failed to authenticate');
     }
+  };
+
+  const handleContinueAsGuest = () => {
+    onClose(); 
   };
 
   return (
@@ -48,8 +53,8 @@ const AuthPopup = ({ onClose }) => {
           <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
             {mode === 'login' ? 'Sign Up' : 'Login'}
           </button>
-          
         </p>
+        <button className="guest-button" onClick={handleContinueAsGuest}>Continue as Guest</button>
       </div>
     </div>
   );
