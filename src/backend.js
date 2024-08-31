@@ -19,7 +19,7 @@ const port = 5000;
 // Configure CORS
 app.use(cors({
   origin: '*', // Allow requests from this origin
-  credentials: true, // Allow cookies and other credentials
+
 }));
 
 app.use(bodyParser.json());
