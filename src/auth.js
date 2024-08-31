@@ -1,40 +1,24 @@
-// AuthPopup.js
 import React, { useState } from 'react';
-import './Auth.css'; // Ensure this CSS file is correctly linked
+import './Auth.css'; // Create this CSS file for styling
 
 const AuthPopup = ({ onClose }) => {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [userId, setUserId] = useState(null); // State to store the user ID
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    try {
-      const response = await fetch(`http://localhost:5000/api/users/${mode}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+    const response = await fetch(`http://localhost:5000/api/users/${mode}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (response.ok) {
+      onClose(); 
 
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUserId(data.userId); // Store the user ID from response
-        console.log('User ID:', data.userId); // Print the user ID in the console
-        alert('Operation successful');
-        onClose();
-      } else {
-        alert('Failed to authenticate');
-      }
-    } catch (error) {
-      console.error('Error during authentication:', error); // Log any errors
-      alert('An error occurred');
+    } else {
+      alert('Failed to authenticate');
     }
-  };
-
-  const handleContinueAsGuest = () => {
-    onClose(); 
   };
 
   return (
@@ -59,14 +43,13 @@ const AuthPopup = ({ onClose }) => {
           />
           <button type="submit">{mode === 'login' ? 'Login' : 'Sign Up'}</button>
         </form>
-        {userId && <p>Your user ID is: {userId}</p>} {/* Display user ID */}
         <p>
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
           <button onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}>
             {mode === 'login' ? 'Sign Up' : 'Login'}
           </button>
+          
         </p>
-        <button className="guest-button" onClick={handleContinueAsGuest}>Continue as Guest</button>
       </div>
     </div>
   );

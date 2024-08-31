@@ -20,12 +20,9 @@ const Quiz = () => {
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
   const [isQuizActive, setIsQuizActive] = useState(false); 
   const [showAuthPopup, setShowAuthPopup] = useState(true); 
-  const [userId, setUserId] = useState(null);
 
-  // Fetch questions only if the user is authenticated
-  
   const fetchQuestions = async () => {
-    if (!isQuizActive || !userId) return;
+    if (!isQuizActive) return;
 
     setLoading(true);
     setError(null);
@@ -46,7 +43,7 @@ const Quiz = () => {
         setTimer(30);
         setIsTimerActive(true);
       } else {
-        setError('No questions available');
+        setError('');
       }
     } catch (error) {
       setError('Failed to fetch questions');
@@ -56,10 +53,10 @@ const Quiz = () => {
   };
 
   useEffect(() => {
-    if (isQuizActive && userId) {
+    if (isQuizActive) {
       fetchQuestions(); 
     }
-  }, [isQuizActive, userId]);
+  }, [isQuizActive]);
 
   useEffect(() => {
     let timerInterval;
@@ -124,23 +121,13 @@ const Quiz = () => {
     fetchQuestions();
   };
 
-  const handleLogin = (userId) => {
-    setUserId(userId);
-    setShowAuthPopup(false); // Close auth popup on successful login
-    setIsQuizActive(true); // Start quiz after login
-  };
-
-  const handleAuthPopupClose = () => {
-    setShowAuthPopup(false);
-  };
-
   if (questions && currentQuestionIndex >= questions.length && isQuizActive) {
     return <div><h1>Quiz Completed!</h1><p>Your final score is {score}</p></div>;
   }
 
   return (
     <div>
-      {showAuthPopup && <AuthPopup onClose={handleAuthPopupClose} onLogin={handleLogin} />}
+      {showAuthPopup && <AuthPopup onClose={() => setShowAuthPopup(false)} />}
       <h1>Quiz Questions</h1>
       <div className="container">
         <div className="box">
