@@ -18,7 +18,7 @@ const port = 5000;
 
 // Configure CORS
 app.use(cors({
-  origin: '*', // Allow requests from this origin
+  origin: 'https://quiz-app-phi-ebon.vercel.app/', // Allow requests from this origin
 
 }));
 
