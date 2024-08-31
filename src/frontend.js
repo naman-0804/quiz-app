@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import './frontend.css'; // Import the CSS file
 
 const Quiz = () => {
   const [questions, setQuestions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [score, setScore] = useState(0);
-  const [answeredOptions, setAnsweredOptions] = useState({}); 
+  const [answeredOptions, setAnsweredOptions] = useState({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [timer, setTimer] = useState(30);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
+  const [isQuizActive, setIsQuizActive] = useState(true);
 
   const fetchQuestions = async () => {
+    if (!isQuizActive) return;
+
     setLoading(true);
     setError(null);
 
@@ -23,7 +31,10 @@ const Quiz = () => {
           options: [...question.incorrect_answers, question.correct_answer].sort(() => Math.random() - 0.5)
         }));
         setQuestions(sortedQuestions);
-        setAnsweredOptions({}); 
+        setAnsweredOptions({});
+        setCurrentQuestionIndex(0);
+        setTimer(30);
+        setIsTimerActive(true);
       } else {
         setError('');
       }
@@ -34,8 +45,30 @@ const Quiz = () => {
     }
   };
 
+  useEffect(() => {
+    fetchQuestions(); 
+  }, []);
+
+  useEffect(() => {
+    let timerInterval;
+    if (isTimerActive) {
+      timerInterval = setInterval(() => {
+        setTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            clearInterval(timerInterval);
+            setIsTimerActive(false);
+            handleAnswerClick(null, null, currentQuestionIndex); 
+            return 0;
+          }
+          return prevTimer - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timerInterval);
+  }, [isTimerActive, currentQuestionIndex]);
+
   const handleAnswerClick = (selectedAnswer, correctAnswer, questionIndex) => {
-    if (!answeredOptions[questionIndex]) {
+    if (!answeredOptions[questionIndex] && isQuizActive) {
       if (selectedAnswer === correctAnswer) {
         setScore((prevScore) => prevScore + 1);
       }
@@ -46,53 +79,66 @@ const Quiz = () => {
           correct: selectedAnswer === correctAnswer,
         },
       }));
+
+      setTotalQuestionsAnswered((prevCount) => prevCount + 1);
+
+      setTimeout(() => {
+        setCurrentQuestionIndex((prevIndex) => {
+          const nextIndex = prevIndex + 1;
+          if (nextIndex < questions.length) {
+            setTimer(30); 
+            setIsTimerActive(true);
+            return nextIndex;
+          } else {
+            fetchQuestions();
+            return 0; 
+          }
+        });
+      }, 500); 
     }
   };
 
+  const handleStopQuiz = () => {
+    setIsQuizActive(false);
+    setIsTimerActive(false); 
+  };
+
+  const handleRefreshQuiz = () => {
+    setIsQuizActive(true);
+    fetchQuestions();
+  };
+
+  if (questions && currentQuestionIndex >= questions.length && isQuizActive) {
+    return <div><h1>Quiz Completed!</h1><p>Your final score is {score}</p></div>;
+  }
+
   return (
     <div>
-      <style>
-        {`
-          .blurred {
-            filter: blur(5px);
-          }
-          .options button {
-            margin: 5px;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-          }
-          .correct {
-            background-color: lightgreen;
-          }
-          .incorrect {
-            background-color: lightcoral;
-          }
-        `}
-      </style>
       <h1>Quiz Questions</h1>
-      <p>Score: {score}</p> 
-      
-      <button onClick={fetchQuestions} disabled={loading}>
-        {loading ? 'Loading...' : 'Get New Questions'}
-      </button>
-
+      <div className="container">
+        <div className="box">
+          <p>Score: {score}</p>
+          <p>Total Questions Answered: {totalQuestionsAnswered}</p>
+          <p>Timer: {timer}s</p>
+          <button className="stop-button" onClick={handleStopQuiz} disabled={!isQuizActive}>Stop Quiz</button>
+          <button className="refresh-button" onClick={handleRefreshQuiz} disabled={!isQuizActive}>Refresh Quiz</button>
+        </div>
+      </div>
       {error && <p>{error}</p>}
-
-      {!loading && questions && questions.length > 0 && (
-        questions.map((question, index) => (
-          <div key={index} className="question-container">
-            <p className="question">{question.question}</p>
+      {!loading && questions && questions.length > 0 && isQuizActive && (
+        currentQuestionIndex < questions.length && (
+          <div className="question-container">
+            <p className="question">{questions[currentQuestionIndex].question}</p>
             <ul className="options">
-              {question.options.map((option, i) => {
-                const isBlurred = answeredOptions[index] && answeredOptions[index].selected;
-                const isCorrect = answeredOptions[index] && option === question.correct_answer;
+              {questions[currentQuestionIndex].options.map((option, i) => {
+                const isBlurred = answeredOptions[currentQuestionIndex] && answeredOptions[currentQuestionIndex].selected;
+                const isCorrect = answeredOptions[currentQuestionIndex] && option === questions[currentQuestionIndex].correct_answer;
 
                 return (
                   <li key={i} className={isBlurred ? (isCorrect ? 'correct' : 'incorrect') : ''}>
                     <button
-                      onClick={() => handleAnswerClick(option, question.correct_answer, index)}
-                      disabled={answeredOptions[index]?.selected} 
+                      onClick={() => handleAnswerClick(option, questions[currentQuestionIndex].correct_answer, currentQuestionIndex)}
+                      disabled={answeredOptions[currentQuestionIndex]?.selected} 
                     >
                       {option}
                     </button>
@@ -101,7 +147,7 @@ const Quiz = () => {
               })}
             </ul>
           </div>
-        ))
+        )
       )}
     </div>
   );
