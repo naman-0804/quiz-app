@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './frontend.css'; 
-import AuthPopup from './auth'; // Import the AuthPopup component
+import AuthPopup from './auth'; 
 
 function decodeHtmlEntities(str) {
     const textarea = document.createElement('textarea');
@@ -18,8 +18,8 @@ const Quiz = () => {
   const [timer, setTimer] = useState(30);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [totalQuestionsAnswered, setTotalQuestionsAnswered] = useState(0);
-  const [isQuizActive, setIsQuizActive] = useState(false); // Start quiz inactive initially
-  const [showAuthPopup, setShowAuthPopup] = useState(true); // Show auth popup initially
+  const [isQuizActive, setIsQuizActive] = useState(false); 
+  const [showAuthPopup, setShowAuthPopup] = useState(true); 
 
   const fetchQuestions = async () => {
     if (!isQuizActive) return;
