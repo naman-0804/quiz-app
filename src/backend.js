@@ -18,8 +18,7 @@ const port = 5000;
 
 // Configure CORS
 app.use(cors({
-  origin: 'https://quiz-app-phi-ebon.vercel.app/', // Allow requests from this origin
-
+  origin: ['https://quiz-app-phi-ebon.vercel.app', 'http://localhost:3000'], // Allow requests from these origins
 }));
 
 app.use(bodyParser.json());
@@ -74,5 +73,5 @@ app.get('/api/users/:userId', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log('Server is running on http://localhost:${port}');
+  console.log(`Server is running on http://localhost:${port}`);
 });
