@@ -18,7 +18,7 @@ const app = express();
 const port = 5000;
 
 app.use(cors({
-  origin: ['https://quiz-app-phi-ebon.vercel.app', 'http://localhost:3000'], 
+  origin: ['https://quiz-app-phi-ebon.vercel.app/', 'http://localhost:3000'], 
 }));
 app.use(bodyParser.json());
 
