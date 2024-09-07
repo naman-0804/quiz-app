@@ -9,7 +9,7 @@ const AuthPopup = ({ onClose }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const response = await fetch(`http://localhost:5000/api/users/${mode}`, {
+    const response = await fetch(`https://quiz-app-8y35.onrender.com/api/users/${mode}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
